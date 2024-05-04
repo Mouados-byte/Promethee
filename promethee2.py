@@ -1,9 +1,10 @@
 import numpy as np
 
 class Promethee2:
-    def __init__(self, criteria, alternatives, weights = None, direction = None, flows = None, preference = None):
+    def __init__(self, criteria, alternatives, weights = None, direction = None, labels = None, flows = None, preference = None):
         self.criteria = criteria
         self.alternatives = alternatives
+        self.labels = [i for i in range(len(criteria))] if labels is None else labels
         self.weights = [1 for i in range(len(criteria))] if weights is None else weights
         self.direction = ["max" for i in range(len(criteria))] if direction is None else direction
         self.compared_alterantives = [[0 for i in range(len(alternatives))] for j in range(len(alternatives))]
@@ -18,8 +19,8 @@ class Promethee2:
         self.flows = flows
         
     def calculate_preference(self):
-        max_value = [max(np.transpose(alternatives)[i]) for i in range(len(self.criteria))]
-        min_value = [min(np.transpose(alternatives)[i]) for i in range(len(self.criteria))]
+        max_value = [max(np.transpose(self.alternatives)[i]) for i in range(len(self.criteria))]
+        min_value = [min(np.transpose(self.alternatives)[i]) for i in range(len(self.criteria))]
         for i in range(len(self.alternatives)):
           for j in range(len(self.criteria)):
             self.compared_alterantives[i][j] = max_value[j] - self.alternatives[i][j] if self.direction[j] == "min" else self.alternatives[i][j] - min_value[j]
@@ -47,24 +48,15 @@ class Promethee2:
     def calculate_ranking(self):
         for i in range(len(self.flows[0])):
           self.ranking[i] += self.flows[0][i] - self.flows[1][i]
-        return self.ranking
+        return self.get_ranking()
       
     
     def process_promethee(self):
         self.calculate_preference()
-        print(self.preference)
         self.calculate_flows()
-        print(self.flows)
         return self.calculate_ranking()
         
-
-    def get_ranking(self):
-        return self.ranking
-      
-alternatives = [[250, 16, 12, 5], [200, 16, 8, 3], [300, 32, 16, 4], [275, 32, 8, 2]]
-criteria = ['price', 'storage', 'camera', 'looks']
-direction = ['min', 'max', 'max', 'max']
-weights = [0.35, 0.25, 0.25, 0.15]
-promethee = Promethee2(criteria, alternatives, weights, direction)
-ranking = promethee.process_promethee()
-print(ranking)
+    def get_ranking(self, with_values = False):
+      ranking = dict(zip(self.labels, self.ranking))
+      sorted_ranking = dict(sorted(ranking.items(), key=lambda item: item[1], reverse=True))
+      return sorted_ranking if with_values else list(sorted_ranking.keys())
